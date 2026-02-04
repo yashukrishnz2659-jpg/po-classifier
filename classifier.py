@@ -1,14 +1,23 @@
 import streamlit as st
-from groq import Groq
 from prompts import SYSTEM_PROMPT
-
-client = Groq(
-    api_key=st.secrets["GROQ_API_KEY"]
-)
 
 MODEL = "openai/gpt-oss-120b"
 
+
+@st.cache_resource
+def get_groq_client():
+    try:
+        from groq import Groq
+    except ImportError:
+        st.error("Groq package not installed. Add `groq` to requirements.txt")
+        st.stop()
+
+    return Groq(api_key=st.secrets["GROQ_API_KEY"])
+
+
 def classify_po(po_description: str, supplier: str = "Not provided"):
+    client = get_groq_client()
+
     user_prompt = f"""
 PO Description:
 {po_description}
@@ -27,5 +36,3 @@ Supplier:
     )
 
     return response.choices[0].message.content
-
-
